@@ -4,6 +4,20 @@ A high-quality Tdarr Flow for Intel Arc / Quick Sync Video (QSV) users who want 
 
 > Status: **early testing / v0.1.x quality**. Test against copies of representative media before enabling it on an entire library.
 
+## Install
+
+The recommended install path is the latest GitHub Release:
+
+1. Open **Releases**.
+2. Download the versioned JSON asset, for example `tdarr-av1-flow-v0.1.0.json`.
+3. Import that JSON into Tdarr under **Flows**.
+
+Release assets are generated automatically from the exact tagged repository tree and include a SHA-256 checksum in the release notes.
+
+The development copy is also kept in:
+
+`flows/Darkroast_Lightroast_Master_AV1_QSV.json`
+
 ## Goals
 
 - Convert non-AV1 video to **10-bit AV1 using Intel QSV**.
@@ -17,13 +31,7 @@ A high-quality Tdarr Flow for Intel Arc / Quick Sync Video (QSV) users who want 
 - Refresh **Radarr and Sonarr** after replacement.
 - Optionally send a Discord notification through Tdarr's Apprise Flow plugin.
 
-## Flow
-
-Import:
-
-`flows/Darkroast_Lightroast_Master_AV1_QSV.json`
-
-### Adaptive quality policy
+## Adaptive quality policy
 
 | Source video bitrate | QSV AV1 quality |
 | --- | ---: |
@@ -104,6 +112,8 @@ Test representative copies of:
 - TV episode and Movie with similarly high production quality.
 
 Verify video codec/pixel format, HDR/DV behavior, retained audio, retained subtitles, duration, final file size, and Radarr/Sonarr refresh behavior before processing a full library.
+
+See [`docs/TESTING.md`](docs/TESTING.md) for the validation matrix and [`docs/RELEASING.md`](docs/RELEASING.md) for the automated release process.
 
 ## Hardware
 
