@@ -1,0 +1,162 @@
+name: Create Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version/tag (for example v0.1.0)"
+        required: true
+        default: "v0.1.0"
+        type: string
+      title:
+        description: "Release title"
+        required: true
+        default: "Initial AV1 QSV Flow"
+        type: string
+      prerelease:
+        description: "Publish as a pre-release"
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ inputs.version }}
+  cancel-in-progress: false
+
+env:
+  FLOW_FILE: flows/Darkroast_Lightroast_Master_AV1_QSV.json
+
+jobs:
+  release:
+    name: Build and publish ${{ inputs.version }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Validate version
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION='${{ inputs.version }}'
+          if [[ ! "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
+            echo "Invalid version: $VERSION"
+            echo "Expected a tag such as v0.1.0 or v1.0.0-rc.1"
+            exit 1
+          fi
+
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Ensure release tag exists
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION='${{ inputs.version }}'
+
+          if git rev-parse "$VERSION" >/dev/null 2>&1; then
+            echo "Tag $VERSION already exists; using the existing tag."
+          else
+            echo "Creating $VERSION at ${GITHUB_SHA}."
+            git tag "$VERSION" "$GITHUB_SHA"
+            git push origin "$VERSION"
+          fi
+
+          # Build the release asset from the exact tree referenced by the tag.
+          git checkout --detach "$VERSION"
+
+      - name: Validate flow JSON
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f "$FLOW_FILE"
+          python -m json.tool "$FLOW_FILE" >/dev/null
+          echo "Validated $FLOW_FILE"
+
+      - name: Build versioned release asset
+        id: asset
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION='${{ inputs.version }}'
+          ASSET="tdarr-av1-flow-${VERSION}.json"
+          cp "$FLOW_FILE" "$ASSET"
+          echo "path=$ASSET" >> "$GITHUB_OUTPUT"
+          echo "sha256=$(sha256sum "$ASSET" | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+
+      - name: Build release notes from CHANGELOG
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION='${{ inputs.version }}'
+
+          awk -v v="$VERSION" '
+            $0 == "## [" v "]" || index($0, "## [" v "] -") == 1 { found=1; next }
+            found && /^## \[/ { exit }
+            found { print }
+          ' CHANGELOG.md > RELEASE_NOTES.generated.md
+
+          if [[ ! -s RELEASE_NOTES.generated.md ]]; then
+            cat > RELEASE_NOTES.generated.md <<EOF
+          Release $VERSION of tdarr-av1-flow.
+
+          See CHANGELOG.md and README.md for details and validation guidance.
+          EOF
+          fi
+
+          cat >> RELEASE_NOTES.generated.md <<EOF
+
+          ---
+
+          ### Download
+
+          Import **\`tdarr-av1-flow-${VERSION}.json\`** directly into Tdarr.
+
+          **SHA-256:** \`${{ steps.asset.outputs.sha256 }}\`
+          EOF
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION='${{ inputs.version }}'
+          TITLE='${{ inputs.title }}'
+          ASSET='${{ steps.asset.outputs.path }}'
+
+          if gh release view "$VERSION" >/dev/null 2>&1; then
+            echo "A GitHub Release for $VERSION already exists. Delete or edit it before re-running this workflow."
+            exit 1
+          fi
+
+          ARGS=(
+            "$VERSION"
+            "$ASSET"
+            --title "$VERSION — $TITLE"
+            --notes-file RELEASE_NOTES.generated.md
+            --verify-tag
+          )
+
+          if [[ '${{ inputs.prerelease }}' == 'true' ]]; then
+            ARGS+=(--prerelease)
+          else
+            ARGS+=(--latest)
+          fi
+
+          gh release create "${ARGS[@]}"
+
+      - name: Summary
+        shell: bash
+        run: |
+          {
+            echo "## Release created"
+            echo
+            echo "- Version: **${{ inputs.version }}**"
+            echo "- Asset: **${{ steps.asset.outputs.path }}**"
+            echo "- SHA-256: \`${{ steps.asset.outputs.sha256 }}\`"
+            echo "- Pre-release: **${{ inputs.prerelease }}**"
+          } >> "$GITHUB_STEP_SUMMARY"
