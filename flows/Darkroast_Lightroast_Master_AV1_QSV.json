@@ -1,0 +1,8 @@
+{
+  "_id": "systemdbrew_universal_av1_qsv_master",
+  "name": "Darkroast + Lightroast - Master AV1 QSV",
+  "description": "Universal Movie/TV flow: preserve Dolby Vision by stream-copying video; otherwise AV1 QSV 10-bit with adaptive quality from source video bitrate. Keeps the best original-language audio plus best English audio without transcoding; keeps English or forced subtitles; validates duration/health/size; replaces safely; refreshes Radarr and Sonarr. Optional Discord/Apprise node is included disabled.",
+  "tags": "AV1,QSV,Movies,TV",
+  "flowPlugins": [],
+  "flowEdges": []
+}
