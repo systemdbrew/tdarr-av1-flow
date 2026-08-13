@@ -51,21 +51,26 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Ensure release tag exists
+      - name: Ensure release tag points at this revision
         shell: bash
         run: |
           set -euo pipefail
           VERSION='${{ inputs.version }}'
 
           if git rev-parse "$VERSION" >/dev/null 2>&1; then
-            echo "Tag $VERSION already exists; using the existing tag."
+            TAG_SHA="$(git rev-list -n 1 "$VERSION")"
+            if [[ "$TAG_SHA" != "$GITHUB_SHA" ]]; then
+              echo "Tag $VERSION already exists at $TAG_SHA but this workflow is running at $GITHUB_SHA."
+              echo "Do not silently rewrite published tags. Delete the old tag or choose a new version, then run again."
+              exit 1
+            fi
+            echo "Tag $VERSION already points at this revision."
           else
-            echo "Creating $VERSION at ${GITHUB_SHA}."
+            echo "Creating $VERSION at $GITHUB_SHA."
             git tag "$VERSION" "$GITHUB_SHA"
             git push origin "$VERSION"
           fi
 
-          # Build the release asset from the exact tree referenced by the tag.
           git checkout --detach "$VERSION"
 
       - name: Validate flow JSON
@@ -92,8 +97,9 @@ jobs:
         run: |
           set -euo pipefail
           VERSION='${{ inputs.version }}'
+          CHANGELOG_VERSION="${VERSION#v}"
 
-          awk -v v="$VERSION" '
+          awk -v v="$CHANGELOG_VERSION" '
             $0 == "## [" v "]" || index($0, "## [" v "] -") == 1 { found=1; next }
             found && /^## \[/ { exit }
             found { print }
@@ -129,7 +135,7 @@ jobs:
           ASSET='${{ steps.asset.outputs.path }}'
 
           if gh release view "$VERSION" >/dev/null 2>&1; then
-            echo "A GitHub Release for $VERSION already exists. Delete or edit it before re-running this workflow."
+            echo "A GitHub Release for $VERSION already exists. Delete it or choose a new version before re-running."
             exit 1
           fi
 
