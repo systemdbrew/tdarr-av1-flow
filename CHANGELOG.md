@@ -4,6 +4,23 @@ All notable changes to this project will be documented here.
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-08-12
+
+### Fixed
+- Replaced Tdarr's generic `10 Bit Video` node for the QSV AV1 path because it emits `-profile:v main10`, which `av1_qsv` rejects.
+- AV1 QSV 10-bit output now uses AV1 Main profile with QSV P010 surfaces via `scale_qsv=format=p010le`.
+- Enabled hardware decoding through the QSV encoder node so Tdarr supplies the correct QSV decode arguments instead of relying on the deprecated implicit `-hwaccel qsv` behavior.
+- Removed duplicate manual QSV input arguments from each adaptive-quality branch.
+
+### Verified in v0.1.0 testing
+- Radarr original-language lookup correctly identified English for the test REMUX.
+- Audio cleanup kept the best English/original DTS:X 7.1 track and removed the English commentary track without transcoding audio.
+- Subtitle cleanup selected English subtitle streams while removing unwanted languages.
+- The first encode failure was isolated to the invalid `main10` AV1 QSV profile and did not modify the source file.
+
+### Status
+- Pre-release bugfix; repeat the same regression test before broad library use.
+
 ## [0.1.0] - 2026-08-12
 
 ### Added
