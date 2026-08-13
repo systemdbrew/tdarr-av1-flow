@@ -31,6 +31,47 @@ The development copy is also kept in:
 - Refresh **Radarr and Sonarr** after replacement.
 - Optionally send a Discord notification through Tdarr's Apprise Flow plugin.
 
+## Flow layout
+
+The flow is intentionally readable in Tdarr. Important decisions are shown as separate nodes instead of being hidden inside one large script:
+
+```text
+Input
+  ↓
+Determine Original Language
+  ↓
+Audio - Keep Best Original + English
+  ↓
+Subtitles - Keep English + Forced
+  ↓
+Dolby Vision?
+  ├─ Yes → preserve source video
+  └─ No
+       ↓
+    Already AV1?
+       ├─ Yes → preserve source video
+       └─ No
+            ↓
+        Require Intel AV1 QSV
+            ↓
+        Video Bitrate Available?
+            ├─ No  → Q20 fallback
+            └─ Yes
+                 ↓
+              ≥20 Mbps? → Q20
+              10-20?    → Q21
+              5-10?     → Q22
+              <5?       → Q23
+                 ↓
+             AV1 QSV 10-bit
+  ↓
+MKV → duration check → health check → size check → replace
+  ↓
+Refresh Radarr → Refresh Sonarr
+```
+
+Custom-function nodes are still used where Tdarr's stock visual plugins cannot safely express the policy: resolving the original language, ranking the best audio tracks, applying the `English OR forced` subtitle rule, and conservative Dolby Vision detection. The bitrate tiers themselves use Tdarr's native **Check Video Bitrate** nodes.
+
 ## Adaptive quality policy
 
 | Source video bitrate | QSV AV1 quality |
@@ -39,6 +80,7 @@ The development copy is also kept in:
 | 10-20 Mbps | Q21 |
 | 5-10 Mbps | Q22 |
 | < 5 Mbps | Q23 |
+| unavailable | Q20 fallback |
 
 Lower Q values mean higher quality. The fallback is Q20 when a usable source bitrate cannot be determined, which is intentionally conservative for REMUX-oriented libraries.
 
