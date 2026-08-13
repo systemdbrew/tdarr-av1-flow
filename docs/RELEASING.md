@@ -1,36 +1,30 @@
 # Releasing
 
-Releases are created by GitHub Actions so the downloadable Tdarr flow is always attached as a versioned JSON asset.
+Releases are created by the **Create Release** GitHub Actions workflow.
 
-## Create a release
+## Normal release
 
-1. Open **Actions** in this repository.
-2. Select **Create Release**.
-3. Click **Run workflow**.
-4. Enter the version, for example `v0.1.0`.
-5. Enter a short release title.
-6. Choose whether the release is a pre-release.
-7. Run the workflow.
+1. Make sure `main` contains the exact flow and documentation you want to publish.
+2. Update `CHANGELOG.md` with the release version, for example `## [0.2.0] - YYYY-MM-DD`.
+3. Open **Actions → Create Release → Run workflow**.
+4. Enter a version such as `v0.2.0`, a title, and choose whether it is a pre-release.
+5. Run the workflow.
 
-The workflow will:
+The workflow validates the JSON, creates the Git tag when needed, copies the canonical flow to a versioned asset such as `tdarr-av1-flow-v0.2.0.json`, calculates its SHA-256 checksum, reads the matching changelog section, and publishes the GitHub Release.
 
-- validate the semantic version;
-- create the Git tag if it does not already exist;
-- build the release from the exact tagged repository tree;
-- validate the Tdarr flow JSON;
-- copy the flow to a versioned asset such as `tdarr-av1-flow-v0.1.0.json`;
-- calculate and publish its SHA-256 checksum;
-- extract the matching release notes from `CHANGELOG.md`;
-- create the GitHub Release and attach the JSON asset.
+## Existing tags
 
-## Recreating a deleted release
+Release tags are treated as immutable. If the requested tag already exists but points at a different commit, the workflow stops instead of silently moving the tag.
 
-Deleting a GitHub Release does not necessarily delete its Git tag. That is fine.
+For an unpublished/testing tag that you intentionally want to replace, delete both the old GitHub Release **and the old tag** first, then rerun the workflow. For anything that has been distributed publicly, prefer publishing a new version instead of rewriting history.
 
-If the tag still exists, re-running **Create Release** with the same version will use the existing tag and rebuild the asset from that exact tagged commit.
+## Versioning
 
-If the tag does not exist, the workflow creates it from the commit on which the workflow is run.
+Use semantic versioning:
 
-## Before a stable release
+- `v0.x.y` while the flow is still being validated and may change significantly;
+- increment the minor version for new behavior or policy changes;
+- increment the patch version for compatible fixes/documentation corrections;
+- reserve `v1.0.0` for a broadly validated stable flow.
 
-Keep early releases marked as **pre-release** until the validation matrix in `docs/TESTING.md` has been exercised against representative media.
+The repository copy remains at `flows/Darkroast_Lightroast_Master_AV1_QSV.json`; users should normally download the versioned JSON asset from Releases.
