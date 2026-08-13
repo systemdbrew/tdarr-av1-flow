@@ -4,6 +4,21 @@ All notable changes to this project will be documented here.
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-08-12
+
+### Fixed
+- Explicitly initializes QSV hardware frames on every adaptive-quality branch with `-hwaccel qsv -hwaccel_output_format qsv`.
+- Keeps the 10-bit AV1 path on QSV hardware surfaces so `scale_qsv=format=p010le` receives compatible input frames.
+- Disables the encoder node's implicit hardware-decoding injection and makes the QSV input pipeline explicit and reproducible in the generated FFmpeg command.
+
+### Verified in v0.1.1 testing
+- The previous invalid AV1 `main10` profile issue is fixed; FFmpeg now uses AV1 Main profile.
+- Radarr original-language detection, audio stream-copy cleanup, and English subtitle selection continue to behave correctly.
+- The v0.1.1 failure was isolated to software frames being passed into `scale_qsv`, before source replacement.
+
+### Status
+- Pre-release bugfix; rerun the same 2 Fast 2 Furious REMUX regression test before broad library use.
+
 ## [0.1.1] - 2026-08-12
 
 ### Fixed
