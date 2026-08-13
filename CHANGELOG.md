@@ -8,16 +8,18 @@ All notable changes to this project will be documented here.
 
 ### Added
 - Initial universal Movie + TV Tdarr AV1 QSV flow.
-- Adaptive Q20-Q23 quality selection from source video bitrate.
+- Visually explicit source bitrate decision tree with Q20/Q21/Q22/Q23 branches.
+- Dedicated visible policy nodes for original-language detection, audio cleanup, subtitle cleanup, and Dolby Vision detection.
 - 10-bit AV1 QSV encoding.
 - Original-language + English audio selection with stream-copy preservation.
 - English + forced subtitle retention.
 - Conservative Dolby Vision bypass.
+- Q20 fallback when MediaInfo does not expose a usable video bitrate.
 - MKV output standardization.
 - Duration, health, and size validation before replacement.
 - Radarr and Sonarr refresh nodes.
 - Optional Discord/Apprise notification node.
-- Setup and production test documentation.
+- Setup, testing, and automated release documentation.
 
 ### Status
 - Initial pre-release intended for controlled validation before broad production use.
