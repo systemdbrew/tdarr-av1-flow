@@ -4,6 +4,16 @@ All notable changes to this project will be documented here.
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-08-12
+
+### Added
+- Jellyfin library refresh after a successful file replacement and Radarr/Sonarr notification.
+- New optional Tdarr global variables: `jellyfin_url` and `jellyfin_api_key`.
+- Jellyfin refresh is non-fatal: missing configuration or an API error is logged without failing an otherwise successful transcode.
+
+### Status
+- Pre-release enhancement; validate Jellyfin refresh alongside the current AV1 QSV regression tests.
+
 ## [0.1.2] - 2026-08-12
 
 ### Fixed
